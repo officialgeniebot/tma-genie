@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My First Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            /* Telegram provides theme colors automatically */
+            background-color: var(--tg-theme-bg-color, #fff); 
+            color: var(--tg-theme-text-color, #000);
+            font-family: sans-serif;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh;
+            margin: 0;
+        }
+        button {
+            padding: 15px 30px;
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #fff);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello, <span id="username">User</span>!</h1>
+    <button id="btn">Send Data to n8n</button>
+
+    <script>
+        // 2. Initialize the App
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Expands the app to full height
+
+        // 3. Display User's Name (if available)
+        if (tg.initDataUnsafe.user) {
+            document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name;
+        }
+
+        // 4. Send Data to n8n when button is clicked
+        document.getElementById('btn').addEventListener('click', () => {
+            const n8nWebhook = 'YOUR_N8N_WEBHOOK_URL_HERE'; // Paste your n8n URL here
+
+            fetch(n8nWebhook, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: "Hello from Mini App!",
+                    user_id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "unknown",
+                    initData: tg.initData // Secure string for n8n validation
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Show a native Telegram alert
+                tg.showAlert("Response from n8n: " + JSON.stringify(data));
+            })
+            .catch(err => tg.showAlert("Error: " + err));
+        });
+    </script>
+</body>
+</html>
