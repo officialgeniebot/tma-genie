@@ -2,67 +2,158 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My First Mini App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Voice Cloner</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* --- BASE STYLES --- */
         body {
-            /* Telegram provides theme colors automatically */
-            background-color: var(--tg-theme-bg-color, #fff); 
-            color: var(--tg-theme-text-color, #000);
-            font-family: sans-serif;
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh;
             margin: 0;
+            padding: 0;
+            /* Use system fonts that look native on iOS and Android */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            /* Telegram Theme Colors - these automatically change with user settings */
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
         }
-        button {
-            padding: 15px 30px;
-            background-color: var(--tg-theme-button-color, #3390ec);
-            color: var(--tg-theme-button-text-color, #fff);
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
+
+        /* --- HEADER --- */
+        .header {
+            padding: 24px 16px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 8px 0 0;
+            color: var(--tg-theme-hint-color, #8e8e93); /* Slightly lighter text color */
+            font-size: 15px;
+        }
+
+        /* --- THE GRID CONTAINER --- */
+        .grid-container {
+            display: grid;
+            /* This creates two equal columns */
+            grid-template-columns: 1fr 1fr;
+            /* Spacing between rows and columns */
+            gap: 16px;
+            padding: 16px;
+            /* Ensure padding at bottom so scrolling doesn't cut off */
+            padding-bottom: 40px;
+        }
+
+        /* --- THE CELEBRITY CARD --- */
+        .celeb-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* A slightly different background color to make cards pop */
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            border-radius: 16px;
+            padding: 20px 10px;
             cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.2s ease;
         }
+
+        /* Subtle tap effect */
+        .celeb-card:active {
+            transform: scale(0.97);
+            background-color: var(--tg-theme-bg-color, #e4e4e4);
+        }
+
+        /* --- THE ICON IMAGE --- */
+        .celeb-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%; /* Makes image a circle */
+            object-fit: cover; /* Prevents image distortion */
+            margin-bottom: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            /* Optional: Add a colored border using Telegram's button color */
+            /* border: 3px solid var(--tg-theme-button-color, #3390ec); */
+        }
+
+        /* --- THE NAME LABEL --- */
+        .celeb-name {
+            font-size: 15px;
+            font-weight: 600;
+            text-align: center;
+        }
+
     </style>
 </head>
 <body>
-    <h1>Hello, <span id="username">User</span>!</h1>
-    <button id="btn">Send Data to n8n</button>
+
+    <div class="header">
+        <h1>Select a Voice</h1>
+        <p>Tap a celebrity to start cloning.</p>
+    </div>
+
+    <div class="grid-container">
+
+        <div class="celeb-card" onclick="selectVoice('morgan', 'Morgan Freeman')">
+            <img src="https://placehold.co/150x150/333/FFF?text=MF" alt="Morgan Freeman" class="celeb-icon">
+            <span class="celeb-name">Morgan Freeman</span>
+        </div>
+
+        <div class="celeb-card" onclick="selectVoice('taylor', 'Taylor Swift')">
+            <img src="https://placehold.co/150x150/pink/white?text=TS" alt="Taylor Swift" class="celeb-icon">
+            <span class="celeb-name">Taylor Swift</span>
+        </div>
+
+        <div class="celeb-card" onclick="selectVoice('elon', 'Elon Musk')">
+            <img src="https://placehold.co/150x150/red/white?text=EM" alt="Elon Musk" class="celeb-icon">
+            <span class="celeb-name">Elon Musk</span>
+        </div>
+
+        <div class="celeb-card" onclick="selectVoice('obama', 'Barack Obama')">
+            <img src="https://placehold.co/150x150/blue/white?text=BO" alt="Barack Obama" class="celeb-icon">
+            <span class="celeb-name">Barack Obama</span>
+        </div>
+        
+         <div class="celeb-card" onclick="selectVoice('celeb5', 'Celebrity Five')">
+            <img src="https://placehold.co/150x150/orange/white?text=C5" alt="Celeb 5" class="celeb-icon">
+            <span class="celeb-name">Celebrity Five</span>
+        </div>
+          <div class="celeb-card" onclick="selectVoice('celeb6', 'Celebrity Six')">
+            <img src="https://placehold.co/150x150/purple/white?text=C6" alt="Celeb 6" class="celeb-icon">
+            <span class="celeb-name">Celebrity Six</span>
+        </div>
+        
+    </div>
+
 
     <script>
-        // 2. Initialize the App
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Expands the app to full height
+        tg.expand();
 
-        // 3. Display User's Name (if available)
-        if (tg.initDataUnsafe.user) {
-            document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name;
-        }
+        // --- THE FUNCTION CALLED WHEN A CARD IS CLICKED ---
+        function selectVoice(voiceId, voiceName) {
+            // This is where you will eventually send data to n8n.
+            // For now, let's just show an alert to prove it works.
 
-        // 4. Send Data to n8n when button is clicked
-        document.getElementById('btn').addEventListener('click', () => {
-            const n8nWebhook = 'YOUR_N8N_WEBHOOK_URL_HERE'; // Paste your n8n URL here
+            tg.showAlert(`You selected: ${voiceName} (ID: ${voiceId})`);
 
+            // --- FUTURE N8N INTEGRATION CODE (Commented out for now) ---
+            /*
+            const n8nWebhook = 'YOUR_N8N_WEBHOOK_URL_HERE';
             fetch(n8nWebhook, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    message: "Hello from Mini App!",
-                    user_id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "unknown",
-                    initData: tg.initData // Secure string for n8n validation
+                    action: "voice_selected",
+                    selected_voice_id: voiceId,
+                    user_id: tg.initDataUnsafe.user?.id,
+                    initData: tg.initData
                 })
-            })
-            .then(res => res.json())
-            .then(data => {
-                // Show a native Telegram alert
-                tg.showAlert("Response from n8n: " + JSON.stringify(data));
-            })
-            .catch(err => tg.showAlert("Error: " + err));
-        });
+            }).then(() => {
+                 tg.close(); // Close the app after selection?
+            });
+            */
+        }
     </script>
 </body>
 </html>
