@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Voice Cloner</title>
+    <title>Genie</title>
     <!-- 1. Load Telegram SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
@@ -168,41 +168,34 @@
 
     <!-- HEADER -->
     <div class="header">
-        <h1>Voice Cloner AI</h1>
-        <p>Tap a celebrity to create a video.</p>
+        <h1>Genie</h1>
+        <p>Выбери, кого хочешь клонировать</p>
     </div>
 
-    <!-- GRID OF CELEBRITIES -->
     <div class="grid-container">
         
-        <!-- CARD 1: Morgan Freeman -->
-        <!-- Replace 'src' with your own image URLs later -->
-        <div class="celeb-card" onclick="openModal('morgan_freeman_1', 'Morgan Freeman')">
-            <img src="https://placehold.co/200x200/333/FFF?text=MF" alt="Morgan" class="celeb-icon">
-            <span class="celeb-name">Morgan Freeman</span>
+        <div class="celeb-card" onclick="openModal('moss_audio_242d4d1b-a29c-11f0-abb1-3ebcbb261618', 'Путин')">
+            <img src="https://placehold.co/200x200/333/FFF?text=MF" alt="Putin" class="celeb-icon">
+            <span class="celeb-name">Путин</span>
         </div>
 
-        <!-- CARD 2: Taylor Swift -->
-        <div class="celeb-card" onclick="openModal('taylor_swift_1', 'Taylor Swift')">
-            <img src="https://placehold.co/200x200/ff69b4/FFF?text=TS" alt="Taylor" class="celeb-icon">
-            <span class="celeb-name">Taylor Swift</span>
+        <div class="celeb-card" onclick="openModal('genie_bot_zelenskiy_voice_id', 'Зеленский')">
+            <img src="Vladimir-Zelensky.jpg" alt="Zelensky" class="celeb-icon">
+            <span class="celeb-name">Зеленский</span>
         </div>
 
-        <!-- CARD 3: Elon Musk -->
-        <div class="celeb-card" onclick="openModal('elon_musk_1', 'Elon Musk')">
-            <img src="https://placehold.co/200x200/cc0000/FFF?text=EM" alt="Elon" class="celeb-icon">
-            <span class="celeb-name">Elon Musk</span>
+        <div class="celeb-card" onclick="openModal('genie_bot_markaryan_voice_id', 'Маркарян')">
+            <img src="https://placehold.co/200x200/cc0000/FFF?text=EM" alt="Markaryan" class="celeb-icon">
+            <span class="celeb-name">Маркарян</span>
         </div>
 
-        <!-- CARD 4: Barack Obama -->
-        <div class="celeb-card" onclick="openModal('barack_obama_1', 'Barack Obama')">
-            <img src="https://placehold.co/200x200/0000cc/FFF?text=BO" alt="Obama" class="celeb-icon">
-            <span class="celeb-name">Barack Obama</span>
+        <div class="celeb-card" onclick="openModal('genie_bot_elon_voice_id', 'Илон Маск')">
+            <img src="https://placehold.co/200x200/0000cc/FFF?text=EM" alt="Elon" class="celeb-icon">
+            <span class="celeb-name">Илон Маск</span>
         </div>
 
     </div>
 
-    <!-- MODAL POPUP (Hidden by default) -->
     <div id="inputModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
         <div class="modal-content">
             <h3 class="modal-title" id="modalTitle">Voice Name</h3>
