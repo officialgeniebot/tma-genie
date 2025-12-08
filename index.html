@@ -369,8 +369,7 @@
             <div class="deposit-box">
                 <div class="deposit-label">Адрес (TON Network)</div>
                 <div class="deposit-value-row">
-                    <!-- REPLACE THIS WITH YOUR REAL TON WALLET -->
-                    <div class="deposit-value" id="walletAddr">UQC-YOUR-REAL-WALLET-ADDRESS-HERE</div>
+                    <div class="deposit-value" id="walletAddr">UQAxHCwLOL5AAKjIYT2onp4Xaq-3NteNmz9vWSyEzYjgD3mt</div>
                     <button class="copy-btn" onclick="copyText('walletAddr')">КОПИРОВАТЬ</button>
                 </div>
             </div>
@@ -396,6 +395,34 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand(); 
+
+        // --- LOAD USER DATA ---
+        function fetchUserData() {
+            // Show a loading state (optional)
+            document.getElementById('credit-count').innerText = "...";
+
+            const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "test_user";
+            
+            // Create a NEW Webhook in n8n specifically for "Getting Data" (Method: GET)
+            const getBalanceUrl = "https://primary-production-eb80.up.railway.app/webhook-test/9018a33f-c1b0-4219-98ba-5378dd869890" + userId;
+
+            fetch(getBalanceUrl)
+                .then(res => res.json())
+                .then(data => {
+                    // n8n should return JSON like: { "credits": 12 }
+                    if (data.credits !== undefined) {
+                        document.getElementById('credit-count').innerText = data.credits;
+                    }
+                })
+                .catch(err => {
+                    console.error("Failed to load credits");
+                    // Fallback to 0 or 5 if offline
+                    document.getElementById('credit-count').innerText = "5"; 
+                });
+        }
+
+        // Call this immediately when the app loads
+        fetchUserData();
 
         // --- CONFIGURATION ---
         // REPLACE THIS WITH YOUR ACTUAL TON WALLET ADDRESS
