@@ -307,7 +307,7 @@
     <!-- GRID -->
     <div class="grid-container">
         
-        <!-- Updated Video IDs as requested -->
+        <!-- CORRECT VIDEO IDs PRESERVED -->
         <div class="celeb-card" onclick="openModal('moss_audio_242d4d1b-a29c-11f0-abb1-3ebcbb261618', '1kpypuPTphVHtjD9NWZCCKKxn7uuUO_KN', 'Путин')">
             <img src="https://placehold.co/200x200/333/FFF?text=VP" alt="Putin" class="celeb-icon">
             <span class="celeb-name">Путин</span>
@@ -358,11 +358,10 @@
             <h3 class="modal-title">Пополнение</h3>
             <p class="modal-desc">Отправьте <b>1 TON</b> или <b>1 USDT</b> (сети TON) на адрес ниже.</p>
             
-            <!-- Quick Pay Button (Deep Link) -->
-            <!-- The href is set dynamically in the script -->
-            <a id="deepLinkBtn" href="#" class="btn-ton">
+            <!-- Quick Pay Button (Uses tg.openLink for reliable opening) -->
+            <button id="deepLinkBtn" class="btn-ton" onclick="openDeepLink()">
                 💎 Открыть Tonkeeper (Auto)
-            </a>
+            </button>
 
             <p style="font-size: 13px; color: #888; margin: 10px 0;">или скопируйте вручную:</p>
 
@@ -410,11 +409,14 @@
         document.getElementById('userComment').innerText = userId;
         document.getElementById('walletAddr').innerText = MY_WALLET_ADDRESS;
 
-        // Setup Deep Link (One-click payment)
-        // Format: ton://transfer/<address>?text=<comment>
-        // Note: 'text' parameter is standard for Tonkeeper/TON Wallets to fill the comment
-        const deepLink = `ton://transfer/${MY_WALLET_ADDRESS}?text=${userId}`;
-        document.getElementById('deepLinkBtn').href = deepLink;
+        // --- DEEP LINK OPENER (The Fix) ---
+        function openDeepLink() {
+            // Using the Universal Link format which is more robust
+            const deepLink = `https://app.tonkeeper.com/transfer/${MY_WALLET_ADDRESS}?text=${userId}`;
+            
+            // Use Telegram SDK method to open external link
+            tg.openLink(deepLink);
+        }
 
         // --- CLIPBOARD FUNCTION ---
         function copyText(elementId) {
