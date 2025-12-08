@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Genie</title>
+    <title>Genie AI</title>
     <!-- 1. Load Telegram SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- 2. Load TON Connect UI -->
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
         /* --- BASE STYLES --- */
         body {
@@ -19,29 +21,57 @@
             min-height: 100vh;
         }
 
-        /* --- HEADER --- */
+        /* --- HEADER & CREDITS --- */
         .header {
-            padding: 24px 16px;
-            text-align: center;
+            padding: 20px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .header h1 {
+        .header-text h1 {
             margin: 0;
-            font-size: 22px;
-            font-weight: 700;
+            font-size: 24px;
+            font-weight: 800;
         }
-        .header p {
-            margin: 8px 0 0;
+        .header-text p {
+            margin: 4px 0 0;
             color: var(--tg-theme-hint-color, #8e8e93);
-            font-size: 15px;
+            font-size: 14px;
+        }
+
+        /* Credits Badge */
+        .credits-container {
+            display: flex;
+            align-items: center;
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .token-icon { margin-right: 6px; }
+        .add-credits-btn {
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            margin-left: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            line-height: 1;
         }
 
         /* --- GRID LAYOUT --- */
         .grid-container {
             display: grid;
-            grid-template-columns: 1fr 1fr; /* Two columns */
-            gap: 16px;
-            padding: 16px;
-            padding-bottom: 40px;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 0 16px 40px 16px;
         }
 
         /* --- CELEBRITY CARD --- */
@@ -51,78 +81,73 @@
             align-items: center;
             background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
             border-radius: 16px;
-            padding: 20px 10px;
+            padding: 16px 10px;
             cursor: pointer;
             transition: transform 0.1s ease;
             position: relative;
         }
-        .celeb-card:active {
-            transform: scale(0.97); /* Tap effect */
-        }
+        .celeb-card:active { transform: scale(0.97); }
         .celeb-icon {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
             object-fit: cover;
             margin-bottom: 12px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         .celeb-name {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             text-align: center;
         }
 
-        /* --- MODAL (POPUP) STYLES --- */
+        /* --- MODAL STYLES --- */
         .modal-overlay {
-            display: none; /* Hidden by default */
+            display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); /* Dimmed background */
+            background: rgba(0, 0, 0, 0.6);
             z-index: 1000;
-            align-items: center;
+            align-items: flex-end; /* Slide up from bottom on mobile */
             justify-content: center;
-            backdrop-filter: blur(2px); /* Blur effect */
+            backdrop-filter: blur(4px);
         }
 
-        /* Animation for popup */
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        /* Center modal on desktop/large screens */
+        @media (min-width: 400px) {
+            .modal-overlay { align-items: center; }
+            .modal-content { border-radius: 20px; width: 350px; }
         }
 
         .modal-content {
             background: var(--tg-theme-bg-color, #fff);
             padding: 24px;
-            border-radius: 16px;
-            width: 85%;
-            max-width: 350px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
             text-align: center;
-            animation: slideUp 0.3s ease-out;
             position: relative;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .modal-title {
-            margin: 0 0 10px;
-            font-size: 20px;
-            font-weight: bold;
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
         }
 
-        .modal-desc {
-            margin: 0 0 20px;
-            color: var(--tg-theme-hint-color, #888);
-            font-size: 14px;
-        }
+        /* Input View */
+        .input-view { display: block; }
+        
+        /* Success View */
+        .success-view { display: none; padding: 20px 0; }
 
-        /* Text Input Area */
         textarea {
             width: 100%;
-            height: 100px;
-            margin-bottom: 20px;
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid var(--tg-theme-hint-color, #ccc);
+            height: 120px;
+            margin: 20px 0;
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid transparent;
             background-color: var(--tg-theme-secondary-bg-color, #f9f9f9);
             color: var(--tg-theme-text-color, #000);
             font-family: inherit;
@@ -132,35 +157,80 @@
             outline: none;
         }
         textarea:focus {
-            border-color: var(--tg-theme-button-color, #3390ec);
+            border: 1px solid var(--tg-theme-button-color, #3390ec);
+            background-color: var(--tg-theme-bg-color, #fff);
         }
 
-        /* Buttons */
         .btn-primary {
             background-color: var(--tg-theme-button-color, #3390ec);
             color: var(--tg-theme-button-text-color, #fff);
             border: none;
-            padding: 14px;
-            border-radius: 10px;
+            padding: 16px;
+            border-radius: 14px;
             width: 100%;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            transition: opacity 0.2s;
         }
-        .btn-primary:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
         .btn-secondary {
             background: transparent;
             color: var(--tg-theme-hint-color, #888);
             border: none;
             padding: 10px;
             width: 100%;
-            font-size: 14px;
+            font-size: 15px;
             cursor: pointer;
+        }
+
+        /* --- SUCCESS ANIMATION --- */
+        .checkmark-circle {
+            width: 80px; height: 80px; position: relative;
+            display: inline-block; vertical-align: top;
+            margin-bottom: 20px;
+        }
+        .checkmark-circle .background {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: #4cd964;
+            position: absolute;
+        }
+        .checkmark-circle .checkmark {
+            border-radius: 5px;
+        }
+        .checkmark-circle .checkmark.draw:after {
+            animation-delay: 100ms;
+            animation-duration: 1s;
+            animation-timing-function: ease;
+            animation-name: checkmark;
+            transform: scaleX(-1) rotate(135deg);
+            animation-fill-mode: forwards;
+        }
+        .checkmark-circle .checkmark:after {
+            opacity: 1;
+            height: 40px;
+            width: 20px;
+            transform-origin: left top;
+            border-right: 4px solid white;
+            border-top: 4px solid white;
+            content: '';
+            left: 14px;
+            top: 40px;
+            position: absolute;
+        }
+        @keyframes checkmark {
+            0% { height: 0; width: 0; opacity: 1; }
+            20% { height: 0; width: 20px; opacity: 1; }
+            40% { height: 40px; width: 20px; opacity: 1; }
+            100% { height: 40px; width: 20px; opacity: 1; }
+        }
+
+        /* --- PAYMENT MODAL SPECIFIC --- */
+        #ton-connect-btn {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -168,140 +238,225 @@
 
     <!-- HEADER -->
     <div class="header">
-        <h1>Genie</h1>
-        <p>Выбери, кого хочешь клонировать</p>
+        <div class="header-text">
+            <h1>Genie AI</h1>
+            <p>Выберите персонажа</p>
+        </div>
+        
+        <!-- CREDITS SYSTEM -->
+        <div class="credits-container">
+            <span class="token-icon">💎</span>
+            <span id="credit-count">5</span>
+            <button class="add-credits-btn" onclick="openPaymentModal()">+</button>
+        </div>
     </div>
 
+    <!-- GRID -->
     <div class="grid-container">
         
-        <div class="celeb-card" onclick="openModal('moss_audio_242d4d1b-a29c-11f0-abb1-3ebcbb261618', 'Путин')">
-            <img src="https://placehold.co/200x200/333/FFF?text=MF" alt="Putin" class="celeb-icon">
+        <!-- Pass VoiceID, VideoID, and Name -->
+        <!-- REPLACE placeholder IMAGES with your own .jpg files -->
+        
+        <div class="celeb-card" onclick="openModal('moss_audio_242d4d1b-a29c-11f0-abb1-3ebcbb261618', 'v_putin_01', 'Путин')">
+            <img src="https://placehold.co/200x200/333/FFF?text=VP" alt="Putin" class="celeb-icon">
             <span class="celeb-name">Путин</span>
         </div>
 
-        <div class="celeb-card" onclick="openModal('genie_bot_zelenskiy_voice_id', 'Зеленский')">
-            <img src="Vladimir-Zelensky.jpg" alt="Zelensky" class="celeb-icon">
+        <div class="celeb-card" onclick="openModal('genie_bot_zelenskiy_voice_id', 'v_zelensky_05', 'Зеленский')">
+            <img src="https://placehold.co/200x200/green/FFF?text=VZ" alt="Zelensky" class="celeb-icon">
             <span class="celeb-name">Зеленский</span>
         </div>
 
-        <div class="celeb-card" onclick="openModal('genie_bot_markaryan_voice_id', 'Маркарян')">
-            <img src="https://placehold.co/200x200/cc0000/FFF?text=EM" alt="Markaryan" class="celeb-icon">
+        <div class="celeb-card" onclick="openModal('genie_bot_markaryan_voice_id', 'v_markaryan_02', 'Маркарян')">
+            <img src="https://placehold.co/200x200/cc0000/FFF?text=AM" alt="Markaryan" class="celeb-icon">
             <span class="celeb-name">Маркарян</span>
         </div>
 
-        <div class="celeb-card" onclick="openModal('genie_bot_elon_voice_id', 'Илон Маск')">
+        <div class="celeb-card" onclick="openModal('genie_bot_elon_voice_id', 'v_elon_09', 'Илон Маск')">
             <img src="https://placehold.co/200x200/0000cc/FFF?text=EM" alt="Elon" class="celeb-icon">
             <span class="celeb-name">Илон Маск</span>
         </div>
 
     </div>
 
+    <!-- INPUT MODAL -->
     <div id="inputModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
         <div class="modal-content">
-            <h3 class="modal-title" id="modalTitle">Voice Name</h3>
-            <p class="modal-desc">Type the text you want them to speak.</p>
+            
+            <!-- SECTION 1: INPUT FORM -->
+            <div id="formSection" class="input-view">
+                <h3 class="modal-title" id="modalTitle">Персонаж</h3>
+                <p class="modal-desc">Введите текст, который нужно озвучить.</p>
 
-            <textarea id="userText" placeholder="Hello, this is a test message..."></textarea>
+                <textarea id="userText" placeholder="Привет! Это тестовое сообщение..."></textarea>
 
-            <button id="generateBtn" class="btn-primary" onclick="submitToN8n()">Generate Video</button>
-            <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button id="generateBtn" class="btn-primary" onclick="submitToN8n()">Создать видео</button>
+                <button class="btn-secondary" onclick="closeModal()">Отмена</button>
+            </div>
+
+            <!-- SECTION 2: SUCCESS ANIMATION -->
+            <div id="successSection" class="success-view">
+                <div class="checkmark-circle">
+                    <div class="background"></div>
+                    <div class="checkmark draw"></div>
+                </div>
+                <h3 class="modal-title">Готово!</h3>
+                <p class="modal-desc">Генерация началась.<br>Видео скоро появится в чате.</p>
+                <button class="btn-secondary" onclick="tg.close()">Закрыть</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PAYMENT MODAL -->
+    <div id="paymentModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
+        <div class="modal-content">
+            <h3 class="modal-title">Пополнение баланса</h3>
+            <p class="modal-desc">Купите 50 кредитов за 1 TON</p>
+            
+            <!-- Container for the Wallet Connect button -->
+            <div id="ton-connect-btn"></div>
+
+            <!-- Pay Button (Only works if connected) -->
+            <button id="payBtn" class="btn-primary" onclick="sendTransaction()">Оплатить 1 TON</button>
+            <button class="btn-secondary" onclick="closePaymentModal()">Закрыть</button>
         </div>
     </div>
 
     <script>
-        // 1. Initialize Telegram WebApp
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Make it full height
+        tg.expand(); 
 
-        // Variables to hold current selection
-        let currentVoiceId = null;
-        let currentVoiceName = null;
+        // --- TON CONNECT SETUP ---
+        // 1. Initialize TON Connect
+        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json', // REPLACE THIS with your own GitHub URL later
+            buttonRootId: 'ton-connect-btn'
+        });
 
-        // --- FUNCTIONS ---
+        // 2. Transaction Logic
+        async function sendTransaction() {
+            if (!tonConnectUI.connected) {
+                tg.showAlert("Сначала подключите кошелек!");
+                return;
+            }
 
-        // Open the modal
-        function openModal(id, name) {
-            currentVoiceId = id;
-            currentVoiceName = name;
+            const transaction = {
+                validUntil: Math.floor(Date.now() / 1000) + 60, // 60 sec validity
+                messages: [
+                    {
+                        address: "UQC-YOUR-WALLET-ADDRESS-HERE", // YOUR WALLET ADDRESS
+                        amount: "1000000000", // 1 TON in nanotons
+                        // Payload is optional, but useful for backend verification
+                        // payload: "..." 
+                    }
+                ]
+            };
 
-            // Update UI text
-            document.getElementById('modalTitle').innerText = name;
-            document.getElementById('userText').value = ""; // Clear old text
-            
-            // Show modal
-            document.getElementById('inputModal').style.display = 'flex';
-            
-            // Focus input (improves UX)
-            setTimeout(() => {
-                document.getElementById('userText').focus();
-            }, 100);
+            try {
+                const result = await tonConnectUI.sendTransaction(transaction);
+                
+                // Transaction sent successfully!
+                tg.showAlert("Транзакция отправлена! Ждем подтверждения...");
+                
+                // Notify n8n to check the blockchain
+                // fetch('YOUR_N8N_CHECK_PAYMENT_URL', ...)
+                
+                closePaymentModal();
+            } catch (e) {
+                tg.showAlert("Ошибка или отмена оплаты.");
+                console.error(e);
+            }
         }
 
-        // Close the modal
+        let currentVoiceId = null;
+        let currentVideoId = null;
+        let currentVoiceName = null;
+
+        // --- MODAL LOGIC ---
+        function openModal(voiceId, videoId, name) {
+            currentVoiceId = voiceId;
+            currentVideoId = videoId; 
+            currentVoiceName = name;
+
+            document.getElementById('formSection').style.display = 'block';
+            document.getElementById('successSection').style.display = 'none';
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('userText').value = "";
+            document.getElementById('generateBtn').innerText = "Создать видео";
+            document.getElementById('generateBtn').disabled = false;
+            
+            document.getElementById('inputModal').style.display = 'flex';
+            
+            setTimeout(() => { document.getElementById('userText').focus(); }, 150);
+        }
+
         function closeModal() {
             document.getElementById('inputModal').style.display = 'none';
         }
 
-        // Close if user clicks the dark background
+        // --- PAYMENT MODAL FUNCTIONS ---
+        function openPaymentModal() {
+            document.getElementById('paymentModal').style.display = 'flex';
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+        }
+
         function closeModalOnOutsideClick(event) {
             if (event.target.id === 'inputModal') {
                 closeModal();
+            } else if (event.target.id === 'paymentModal') {
+                closePaymentModal();
             }
         }
 
-        // --- SUBMIT TO N8N ---
+        // --- SUBMIT ---
         function submitToN8n() {
             const text = document.getElementById('userText').value;
 
-            // Validation
             if (!text || text.trim() === "") {
-                tg.showAlert("Please enter some text!");
+                tg.showAlert("Пожалуйста, введите текст!");
                 return;
             }
 
-            // Disable button to prevent double clicks
             const btn = document.getElementById('generateBtn');
-            btn.innerText = "Sending...";
+            btn.innerText = "Отправка...";
             btn.disabled = true;
 
-            // PREPARE DATA
             const payload = {
                 voice_id: currentVoiceId,
+                video_id: currentVideoId, 
                 voice_name: currentVoiceName,
                 text: text,
-                // Critical: Send user info so n8n knows who to reply to
                 user_id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "unknown",
-                first_name: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.first_name : "User",
-                initData: tg.initData // For security validation
+                username: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username : "unknown",
+                initData: tg.initData
             };
 
-            // YOUR N8N WEBHOOK URL HERE
-            // Note: Use your ngrok URL for testing, or production URL later
             const webhookUrl = "https://primary-production-eb80.up.railway.app/webhook-test/4b0fe177-57c6-4e97-a3f4-a976f61a8046"; 
 
-            // SEND REQUEST
             fetch(webhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             })
             .then(response => {
-                // n8n received it successfully
-                btn.innerText = "Sent!";
-                
-                // UX: Close app after short delay so they see "Sent!"
+                document.getElementById('formSection').style.display = 'none';
+                document.getElementById('successSection').style.display = 'block';
+
+                let credits = parseInt(document.getElementById('credit-count').innerText);
+                if (credits > 0) document.getElementById('credit-count').innerText = credits - 1;
+
                 setTimeout(() => {
-                    closeModal();
-                    // Optional: Show alert before closing
-                    // tg.showAlert("Processing! I'll send the video in the chat.");
-                    tg.close(); 
-                }, 500);
+                    tg.close();
+                }, 2500);
             })
             .catch(error => {
-                // Handle Error
-                tg.showAlert("Error connecting to server. Check your internet.");
+                tg.showAlert("Ошибка соединения. Проверьте интернет.");
                 console.error(error);
-                btn.innerText = "Generate Video";
+                btn.innerText = "Создать видео";
                 btn.disabled = false;
             });
         }
