@@ -6,8 +6,6 @@
     <title>Genie AI</title>
     <!-- 1. Load Telegram SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- 2. Load TON Connect UI -->
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
         /* --- BASE STYLES --- */
         body {
@@ -174,6 +172,22 @@
             margin-bottom: 12px;
             transition: opacity 0.2s;
         }
+        .btn-ton {
+            background-color: #0098EA; /* TON Blue */
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 14px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
         .btn-secondary {
             background: transparent;
             color: var(--tg-theme-hint-color, #888);
@@ -226,11 +240,50 @@
             100% { height: 40px; width: 20px; opacity: 1; }
         }
 
-        /* --- PAYMENT MODAL SPECIFIC --- */
-        #ton-connect-btn {
+        /* --- DEPOSIT UI STYLES --- */
+        .deposit-box {
+            background-color: var(--tg-theme-secondary-bg-color, #f9f9f9);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+        .deposit-label {
+            font-size: 12px;
+            color: var(--tg-theme-hint-color, #888);
+            margin-bottom: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .deposit-value-row {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .deposit-value {
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+            margin-right: 10px;
+            background: rgba(0,0,0,0.05);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--tg-theme-button-color, #3390ec);
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .warning-text {
+            font-size: 12px;
+            color: #ff3b30;
             margin-bottom: 20px;
+            line-height: 1.4;
+            text-align: left;
         }
     </style>
 </head>
@@ -254,20 +307,17 @@
     <!-- GRID -->
     <div class="grid-container">
         
-        <!-- Pass VoiceID, VideoID, and Name -->
-        <!-- REPLACE placeholder IMAGES with your own .jpg files -->
-        
-        <div class="celeb-card" onclick="openModal('moss_audio_242d4d1b-a29c-11f0-abb1-3ebcbb261618', 'v_putin_01', 'Путин')">
+        <div class="celeb-card" onclick="openModal('moss_audio_242d4d1b-a29c-11f0-abb1-3ebcbb261618', '1kpypuPTphVHtjD9NWZCCKKxn7uuUO_KN', 'Путин')">
             <img src="https://placehold.co/200x200/333/FFF?text=VP" alt="Putin" class="celeb-icon">
             <span class="celeb-name">Путин</span>
         </div>
 
-        <div class="celeb-card" onclick="openModal('genie_bot_zelenskiy_voice_id', 'v_zelensky_05', 'Зеленский')">
+        <div class="celeb-card" onclick="openModal('genie_bot_zelenskiy_voice_id', '1WfhXhCrBeP7RbdpHUH48H4n2WYMyiehU', 'Зеленский')">
             <img src="https://placehold.co/200x200/green/FFF?text=VZ" alt="Zelensky" class="celeb-icon">
             <span class="celeb-name">Зеленский</span>
         </div>
 
-        <div class="celeb-card" onclick="openModal('genie_bot_markaryan_voice_id', 'v_markaryan_02', 'Маркарян')">
+        <div class="celeb-card" onclick="openModal('genie_bot_markaryan_voice_id', '1YAb3rD2MIODq7e0nkJBnuGjzsJRB6inq', 'Маркарян')">
             <img src="https://placehold.co/200x200/cc0000/FFF?text=AM" alt="Markaryan" class="celeb-icon">
             <span class="celeb-name">Маркарян</span>
         </div>
@@ -282,19 +332,13 @@
     <!-- INPUT MODAL -->
     <div id="inputModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
         <div class="modal-content">
-            
-            <!-- SECTION 1: INPUT FORM -->
             <div id="formSection" class="input-view">
                 <h3 class="modal-title" id="modalTitle">Персонаж</h3>
                 <p class="modal-desc">Введите текст, который нужно озвучить.</p>
-
                 <textarea id="userText" placeholder="Привет! Это тестовое сообщение..."></textarea>
-
                 <button id="generateBtn" class="btn-primary" onclick="submitToN8n()">Создать видео</button>
                 <button class="btn-secondary" onclick="closeModal()">Отмена</button>
             </div>
-
-            <!-- SECTION 2: SUCCESS ANIMATION -->
             <div id="successSection" class="success-view">
                 <div class="checkmark-circle">
                     <div class="background"></div>
@@ -304,21 +348,47 @@
                 <p class="modal-desc">Генерация началась.<br>Видео скоро появится в чате.</p>
                 <button class="btn-secondary" onclick="tg.close()">Закрыть</button>
             </div>
-
         </div>
     </div>
 
-    <!-- PAYMENT MODAL -->
+    <!-- PAYMENT MODAL (TON) -->
     <div id="paymentModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
         <div class="modal-content">
-            <h3 class="modal-title">Пополнение баланса</h3>
-            <p class="modal-desc">Купите 50 кредитов за 1 TON</p>
+            <h3 class="modal-title">Пополнение</h3>
+            <p class="modal-desc">Отправьте <b>1 TON</b> или <b>1 USDT</b> (сети TON) на адрес ниже.</p>
             
-            <!-- Container for the Wallet Connect button -->
-            <div id="ton-connect-btn"></div>
+            <!-- Quick Pay Button (Deep Link) -->
+            <!-- The href is set dynamically in the script -->
+            <a id="deepLinkBtn" href="#" class="btn-ton">
+                💎 Открыть Tonkeeper (Auto)
+            </a>
 
-            <!-- Pay Button (Only works if connected) -->
-            <button id="payBtn" class="btn-primary" onclick="sendTransaction()">Оплатить 1 TON</button>
+            <p style="font-size: 13px; color: #888; margin: 10px 0;">или скопируйте вручную:</p>
+
+            <!-- WALLET ADDRESS -->
+            <div class="deposit-box">
+                <div class="deposit-label">Адрес (TON Network)</div>
+                <div class="deposit-value-row">
+                    <!-- REPLACE THIS WITH YOUR REAL TON WALLET -->
+                    <div class="deposit-value" id="walletAddr">UQBx...YOUR_WALLET...</div>
+                    <button class="copy-btn" onclick="copyText('walletAddr')">КОПИРОВАТЬ</button>
+                </div>
+            </div>
+
+            <!-- COMMENT (MEMO) -->
+            <div class="deposit-box">
+                <div class="deposit-label" style="color: #0098EA;">ОБЯЗАТЕЛЬНЫЙ КОММЕНТАРИЙ</div>
+                <div class="deposit-value-row">
+                    <div class="deposit-value" id="userComment">loading...</div>
+                    <button class="copy-btn" onclick="copyText('userComment')">КОПИРОВАТЬ</button>
+                </div>
+            </div>
+
+            <div class="warning-text">
+                ⚠️ <b>Важно:</b> При отправке с биржи (Bybit, OKX) обязательно укажите комментарий, иначе средства пропадут!
+            </div>
+
+            <button id="checkPaymentBtn" class="btn-primary" onclick="checkPayment()">Я оплатил</button>
             <button class="btn-secondary" onclick="closePaymentModal()">Закрыть</button>
         </div>
     </div>
@@ -327,53 +397,100 @@
         const tg = window.Telegram.WebApp;
         tg.expand(); 
 
-        // --- TON CONNECT SETUP ---
-        // 1. Initialize TON Connect
-        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-            manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json', // REPLACE THIS with your own GitHub URL later
-            buttonRootId: 'ton-connect-btn'
-        });
+        // --- CONFIGURATION ---
+        // REPLACE THIS WITH YOUR ACTUAL TON WALLET ADDRESS
+        const MY_WALLET_ADDRESS = "UQC-YOUR-REAL-WALLET-ADDRESS-HERE"; 
+        
+        // --- INIT DATA ---
+        // Get user ID safely
+        const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "user_" + Math.floor(Math.random() * 10000);
+        
+        // Populate fields
+        document.getElementById('userComment').innerText = userId;
+        document.getElementById('walletAddr').innerText = MY_WALLET_ADDRESS;
 
-        // 2. Transaction Logic
-        async function sendTransaction() {
-            if (!tonConnectUI.connected) {
-                tg.showAlert("Сначала подключите кошелек!");
-                return;
+        // Setup Deep Link (One-click payment)
+        // Format: ton://transfer/<address>?text=<comment>
+        // Note: 'text' parameter is standard for Tonkeeper/TON Wallets to fill the comment
+        const deepLink = `ton://transfer/${MY_WALLET_ADDRESS}?text=${userId}`;
+        document.getElementById('deepLinkBtn').href = deepLink;
+
+        // --- CLIPBOARD FUNCTION ---
+        function copyText(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            
+            // Try standard clipboard API
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    tg.showAlert("Скопировано!");
+                }).catch(err => {
+                    fallbackCopyText(text);
+                });
+            } else {
+                fallbackCopyText(text);
             }
+        }
 
-            const transaction = {
-                validUntil: Math.floor(Date.now() / 1000) + 60, // 60 sec validity
-                messages: [
-                    {
-                        address: "UQC-YOUR-WALLET-ADDRESS-HERE", // YOUR WALLET ADDRESS
-                        amount: "1000000000", // 1 TON in nanotons
-                        // Payload is optional, but useful for backend verification
-                        // payload: "..." 
-                    }
-                ]
-            };
-
+        // Fallback for older webviews
+        function fallbackCopyText(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
             try {
-                const result = await tonConnectUI.sendTransaction(transaction);
-                
-                // Transaction sent successfully!
-                tg.showAlert("Транзакция отправлена! Ждем подтверждения...");
-                
-                // Notify n8n to check the blockchain
-                // fetch('YOUR_N8N_CHECK_PAYMENT_URL', ...)
-                
-                closePaymentModal();
-            } catch (e) {
-                tg.showAlert("Ошибка или отмена оплаты.");
-                console.error(e);
+                const successful = document.execCommand('copy');
+                if(successful) tg.showAlert("Скопировано!");
+            } catch (err) {
+                tg.showAlert("Не удалось скопировать.");
             }
+            document.body.removeChild(textArea);
+        }
+
+        // --- PAYMENT CHECK ---
+        function checkPayment() {
+            const btn = document.getElementById('checkPaymentBtn');
+            btn.innerText = "Проверяем...";
+            btn.disabled = true;
+
+            const checkUrl = "https://primary-production-eb80.up.railway.app/webhook-test/check-payment"; 
+
+            fetch(checkUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: userId,
+                    action: "check_payment",
+                    initData: tg.initData
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    tg.showAlert("Оплата найдена! +50 кредитов.");
+                    // In a real app, you would fetch the new balance from server
+                    document.getElementById('credit-count').innerText = "55"; 
+                    closePaymentModal();
+                } else {
+                    tg.showAlert("Оплата пока не найдена. Подождите 30 сек.");
+                    btn.innerText = "Я оплатил";
+                    btn.disabled = false;
+                }
+            })
+            .catch(err => {
+                // If the webhook fails/doesn't exist yet, just alert
+                tg.showAlert("Запрос отправлен. Мы уведомим вас о зачислении.");
+                closePaymentModal();
+            });
         }
 
         let currentVoiceId = null;
         let currentVideoId = null;
         let currentVoiceName = null;
 
-        // --- MODAL LOGIC ---
+        // --- MODAL FUNCTIONS ---
         function openModal(voiceId, videoId, name) {
             currentVoiceId = voiceId;
             currentVideoId = videoId; 
@@ -395,7 +512,6 @@
             document.getElementById('inputModal').style.display = 'none';
         }
 
-        // --- PAYMENT MODAL FUNCTIONS ---
         function openPaymentModal() {
             document.getElementById('paymentModal').style.display = 'flex';
         }
@@ -430,7 +546,7 @@
                 video_id: currentVideoId, 
                 voice_name: currentVoiceName,
                 text: text,
-                user_id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "unknown",
+                user_id: userId,
                 username: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username : "unknown",
                 initData: tg.initData
             };
