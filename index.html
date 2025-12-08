@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Genie AI</title>
-    <!-- 1. Load Telegram SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* --- BASE STYLES --- */
         body {
             margin: 0;
             padding: 0;
@@ -19,7 +17,6 @@
             min-height: 100vh;
         }
 
-        /* --- HEADER & CREDITS --- */
         .header {
             padding: 20px 16px;
             display: flex;
@@ -37,7 +34,6 @@
             font-size: 14px;
         }
 
-        /* Credits Badge */
         .credits-container {
             display: flex;
             align-items: center;
@@ -64,7 +60,6 @@
             line-height: 1;
         }
 
-        /* --- GRID LAYOUT --- */
         .grid-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -72,7 +67,6 @@
             padding: 0 16px 40px 16px;
         }
 
-        /* --- CELEBRITY CARD --- */
         .celeb-card {
             display: flex;
             flex-direction: column;
@@ -99,19 +93,17 @@
             text-align: center;
         }
 
-        /* --- MODAL STYLES --- */
         .modal-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.6);
             z-index: 1000;
-            align-items: flex-end; /* Slide up from bottom on mobile */
+            align-items: flex-end; 
             justify-content: center;
             backdrop-filter: blur(4px);
         }
 
-        /* Center modal on desktop/large screens */
         @media (min-width: 400px) {
             .modal-overlay { align-items: center; }
             .modal-content { border-radius: 20px; width: 350px; }
@@ -133,10 +125,8 @@
             to { transform: translateY(0); }
         }
 
-        /* Input View */
         .input-view { display: block; }
         
-        /* Success View */
         .success-view { display: none; padding: 20px 0; }
 
         textarea {
@@ -173,7 +163,7 @@
             transition: opacity 0.2s;
         }
         .btn-ton {
-            background-color: #0098EA; /* TON Blue */
+            background-color: #0098EA;
             color: white;
             border: none;
             padding: 14px;
@@ -198,7 +188,6 @@
             cursor: pointer;
         }
 
-        /* --- SUCCESS ANIMATION --- */
         .checkmark-circle {
             width: 80px; height: 80px; position: relative;
             display: inline-block; vertical-align: top;
@@ -240,7 +229,6 @@
             100% { height: 40px; width: 20px; opacity: 1; }
         }
 
-        /* --- DEPOSIT UI STYLES --- */
         .deposit-box {
             background-color: var(--tg-theme-secondary-bg-color, #f9f9f9);
             border-radius: 12px;
@@ -289,14 +277,12 @@
 </head>
 <body>
 
-    <!-- HEADER -->
     <div class="header">
         <div class="header-text">
             <h1>Genie AI</h1>
             <p>Выберите персонажа</p>
         </div>
         
-        <!-- CREDITS SYSTEM -->
         <div class="credits-container">
             <span class="token-icon">💎</span>
             <span id="credit-count">5</span>
@@ -304,10 +290,8 @@
         </div>
     </div>
 
-    <!-- GRID -->
     <div class="grid-container">
         
-        <!-- CORRECT VIDEO IDs PRESERVED -->
         <div class="celeb-card" onclick="openModal('moss_audio_242d4d1b-a29c-11f0-abb1-3ebcbb261618', '1kpypuPTphVHtjD9NWZCCKKxn7uuUO_KN', 'Путин')">
             <img src="https://placehold.co/200x200/333/FFF?text=VP" alt="Putin" class="celeb-icon">
             <span class="celeb-name">Путин</span>
@@ -330,7 +314,6 @@
 
     </div>
 
-    <!-- INPUT MODAL -->
     <div id="inputModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
         <div class="modal-content">
             <div id="formSection" class="input-view">
@@ -352,29 +335,25 @@
         </div>
     </div>
 
-    <!-- PAYMENT MODAL (TON) -->
     <div id="paymentModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
         <div class="modal-content">
             <h3 class="modal-title">Пополнение</h3>
             <p class="modal-desc">Отправьте <b>1 TON</b> или <b>1 USDT</b> (сети TON) на адрес ниже.</p>
             
-            <!-- Quick Pay Button (Uses tg.openLink for reliable opening) -->
             <button id="deepLinkBtn" class="btn-ton" onclick="openDeepLink()">
-                💎 Открыть Tonkeeper (Auto)
+                💎 Открыть Кошелек
             </button>
 
             <p style="font-size: 13px; color: #888; margin: 10px 0;">или скопируйте вручную:</p>
 
-            <!-- WALLET ADDRESS -->
             <div class="deposit-box">
                 <div class="deposit-label">Адрес (TON Network)</div>
                 <div class="deposit-value-row">
-                    <div class="deposit-value" id="walletAddr">UQAxHCwLOL5AAKjIYT2onp4Xaq-3NteNmz9vWSyEzYjgD3mt</div>
+                    <div class="deposit-value" id="walletAddr">UQC-YOUR-REAL-WALLET-ADDRESS-HERE</div>
                     <button class="copy-btn" onclick="copyText('walletAddr')">КОПИРОВАТЬ</button>
                 </div>
             </div>
 
-            <!-- COMMENT (MEMO) -->
             <div class="deposit-box">
                 <div class="deposit-label" style="color: #0098EA;">ОБЯЗАТЕЛЬНЫЙ КОММЕНТАРИЙ</div>
                 <div class="deposit-value-row">
@@ -396,60 +375,43 @@
         const tg = window.Telegram.WebApp;
         tg.expand(); 
 
-        // --- LOAD USER DATA ---
         function fetchUserData() {
-            // Show a loading state (optional)
             document.getElementById('credit-count').innerText = "...";
 
             const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "test_user";
             
-            // Create a NEW Webhook in n8n specifically for "Getting Data" (Method: GET)
-            const getBalanceUrl = "https://primary-production-eb80.up.railway.app/webhook-test/9018a33f-c1b0-4219-98ba-5378dd869890" + userId;
+            const getBalanceUrl = "https://primary-production-eb80.up.railway.app/webhook-test/9018a33f-c1b0-4219-98ba-5378dd869890?user_id=" + userId;
 
             fetch(getBalanceUrl)
                 .then(res => res.json())
                 .then(data => {
-                    // n8n should return JSON like: { "credits": 12 }
                     if (data.credits !== undefined) {
                         document.getElementById('credit-count').innerText = data.credits;
                     }
                 })
                 .catch(err => {
                     console.error("Failed to load credits");
-                    // Fallback to 0 or 5 if offline
                     document.getElementById('credit-count').innerText = "5"; 
                 });
         }
 
-        // Call this immediately when the app loads
         fetchUserData();
 
-        // --- CONFIGURATION ---
-        // REPLACE THIS WITH YOUR ACTUAL TON WALLET ADDRESS
         const MY_WALLET_ADDRESS = "UQC-YOUR-REAL-WALLET-ADDRESS-HERE"; 
         
-        // --- INIT DATA ---
-        // Get user ID safely
         const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "user_" + Math.floor(Math.random() * 10000);
         
-        // Populate fields
         document.getElementById('userComment').innerText = userId;
         document.getElementById('walletAddr').innerText = MY_WALLET_ADDRESS;
 
-        // --- DEEP LINK OPENER (The Fix) ---
         function openDeepLink() {
-            // Using the Universal Link format which is more robust
-            const deepLink = `https://app.tonkeeper.com/transfer/${MY_WALLET_ADDRESS}?text=${userId}`;
-            
-            // Use Telegram SDK method to open external link
+            const deepLink = `ton://transfer/${MY_WALLET_ADDRESS}?text=${userId}`;
             tg.openLink(deepLink);
         }
 
-        // --- CLIPBOARD FUNCTION ---
         function copyText(elementId) {
             const text = document.getElementById(elementId).innerText;
             
-            // Try standard clipboard API
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(() => {
                     tg.showAlert("Скопировано!");
@@ -461,7 +423,6 @@
             }
         }
 
-        // Fallback for older webviews
         function fallbackCopyText(text) {
             const textArea = document.createElement("textarea");
             textArea.value = text;
@@ -479,7 +440,6 @@
             document.body.removeChild(textArea);
         }
 
-        // --- PAYMENT CHECK ---
         function checkPayment() {
             const btn = document.getElementById('checkPaymentBtn');
             btn.innerText = "Проверяем...";
@@ -500,7 +460,6 @@
             .then(data => {
                 if (data.success) {
                     tg.showAlert("Оплата найдена! +50 кредитов.");
-                    // In a real app, you would fetch the new balance from server
                     document.getElementById('credit-count').innerText = "55"; 
                     closePaymentModal();
                 } else {
@@ -510,7 +469,6 @@
                 }
             })
             .catch(err => {
-                // If the webhook fails/doesn't exist yet, just alert
                 tg.showAlert("Запрос отправлен. Мы уведомим вас о зачислении.");
                 closePaymentModal();
             });
@@ -520,7 +478,6 @@
         let currentVideoId = null;
         let currentVoiceName = null;
 
-        // --- MODAL FUNCTIONS ---
         function openModal(voiceId, videoId, name) {
             currentVoiceId = voiceId;
             currentVideoId = videoId; 
@@ -558,7 +515,6 @@
             }
         }
 
-        // --- SUBMIT ---
         function submitToN8n() {
             const text = document.getElementById('userText').value;
 
