@@ -397,7 +397,7 @@
 
         fetchUserData();
 
-        const MY_WALLET_ADDRESS = "UQC-YOUR-REAL-WALLET-ADDRESS-HERE"; 
+        const MY_WALLET_ADDRESS = "UQAxHCwLOL5AAKjIYT2onp4Xaq-3NteNmz9vWSyEzYjgD3mt"; 
         
         const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "user_" + Math.floor(Math.random() * 10000);
         
@@ -405,21 +405,27 @@
         document.getElementById('walletAddr').innerText = MY_WALLET_ADDRESS;
 
         function openDeepLink() {
-            const deepLink = `ton://transfer/${MY_WALLET_ADDRESS}?text=${userId}`;
-            tg.openLink(deepLink);
-        }
+            // 1. Validate Address
+            if (!MY_WALLET_ADDRESS || MY_WALLET_ADDRESS.includes("YOUR-REAL")) {
+                tg.showAlert("Ошибка: Вы не настроили адрес кошелька в коде!");
+                return;
+            }
 
-        function copyText(elementId) {
-            const text = document.getElementById(elementId).innerText;
+            // 2. Construct Universal Link (Works on iOS/Android/Desktop)
+            // Using app.tonkeeper.com is safer than ton://
+            const deepLink = `https://app.tonkeeper.com/transfer/${MY_WALLET_ADDRESS}?text=${userId}`;
             
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(() => {
-                    tg.showAlert("Скопировано!");
-                }).catch(err => {
-                    fallbackCopyText(text);
-                });
-            } else {
-                fallbackCopyText(text);
+            // Debug Alert (Remove this after testing)
+            // tg.showAlert("Opening: " + deepLink);
+
+            // 3. Try opening
+            try {
+                // Method A: Telegram SDK (Best for Mobile)
+                tg.openLink(deepLink);
+            } catch (e) {
+                console.error(e);
+                // Method B: Fallback for Web/Desktop
+                window.open(deepLink, '_blank');
             }
         }
 
