@@ -380,17 +380,25 @@
 
             const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "test_user";
             
+            // Your GET Balance Webhook URL
             const getBalanceUrl = "https://primary-production-eb80.up.railway.app/webhook-test/9018a33f-c1b0-4219-98ba-5378dd869890?user_id=" + userId;
 
             fetch(getBalanceUrl)
                 .then(res => res.json())
                 .then(data => {
-                    if (data.credits !== undefined) {
-                        document.getElementById('credit-count').innerText = data.credits;
+                    // FIX: Check for 'genTime' instead of 'credits'
+                    // If the response is an array (like in your snippet), grab the first item
+                    const userData = Array.isArray(data) ? data[0] : data;
+
+                    if (userData.genTime !== undefined) {
+                        document.getElementById('credit-count').innerText = userData.genTime;
+                    } else if (userData.credits !== undefined) {
+                        // Fallback in case you change the backend later
+                        document.getElementById('credit-count').innerText = userData.credits;
                     }
                 })
                 .catch(err => {
-                    console.error("Failed to load credits");
+                    console.error("Failed to load credits", err);
                     document.getElementById('credit-count').innerText = "5"; 
                 });
         }
@@ -444,15 +452,21 @@
             btn.disabled = true;
 
             const checkUrl = "https://primary-production-eb80.up.railway.app/webhook-test/4932b3ea-378d-4f3e-b458-9741458468c8"; 
+            
+            // CONSTRUCT QUERY PARAMETERS
+            const params = new URLSearchParams({
+                user_id: userId,
+                action: "check_payment",
+                // Note: passing huge objects like initData in GET params can be tricky due to length limits, 
+                // but for simple checks it might work. Ideally, use POST for complex data.
+                // initData: tg.initData 
+            });
 
-            fetch(checkUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: userId,
-                    action: "check_payment",
-                    initData: tg.initData
-                })
+            fetch(`${checkUrl}?${params.toString()}`, {
+                method: 'GET', // Changed to GET
+                headers: { 
+                    // No Content-Type needed for GET
+                }
             })
             .then(res => res.json())
             .then(data => {
