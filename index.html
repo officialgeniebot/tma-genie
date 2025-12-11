@@ -453,26 +453,31 @@
 
             const checkUrl = "https://primary-production-eb80.up.railway.app/webhook-test/4932b3ea-378d-4f3e-b458-9741458468c8"; 
             
-            // CONSTRUCT QUERY PARAMETERS
+            // 1. Fix: Use Query Parameters for GET requests (GET cannot have a body)
             const params = new URLSearchParams({
                 user_id: userId,
                 action: "check_payment",
-                // Note: passing huge objects like initData in GET params can be tricky due to length limits, 
-                // but for simple checks it might work. Ideally, use POST for complex data.
-                // initData: tg.initData 
+                initData: tg.initData 
             });
 
             fetch(`${checkUrl}?${params.toString()}`, {
-                method: 'GET', // Changed to GET
-                headers: { 
-                    // No Content-Type needed for GET
-                }
+                method: 'GET'
             })
             .then(res => res.json())
             .then(data => {
-                if (data.success) {
-                    tg.showAlert("Оплата найдена! +50 кредитов.");
-                    document.getElementById('credit-count').innerText = "55"; 
+                // 2. Fix: Handle if n8n returns an Array [ { ... } ] or Object { ... }
+                const responseData = Array.isArray(data) ? data[0] : data;
+
+                // 3. Fix: Check for 'genTime' (your backend field)
+                if (responseData.success === true || responseData.genTime !== undefined) {
+                    
+                    tg.showAlert("Оплата найдена! Кредиты начислены.");
+                    
+                    // 4. Fix: Use the REAL value from backend, not "55"
+                    if (responseData.genTime !== undefined) {
+                        document.getElementById('credit-count').innerText = responseData.genTime;
+                    }
+                    
                     closePaymentModal();
                 } else {
                     tg.showAlert("Оплата пока не найдена. Подождите 30 сек.");
@@ -481,8 +486,11 @@
                 }
             })
             .catch(err => {
-                tg.showAlert("Запрос отправлен. Мы уведомим вас о зачислении.");
-                closePaymentModal();
+                // Fallback in case of network error
+                console.error(err);
+                tg.showAlert("Ошибка проверки. Попробуйте позже.");
+                btn.innerText = "Я оплатил";
+                btn.disabled = false;
             });
         }
 
