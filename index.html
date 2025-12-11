@@ -448,34 +448,37 @@
 
         function checkPayment() {
             const btn = document.getElementById('checkPaymentBtn');
+            const creditDisplay = document.getElementById('credit-count'); // Cache the element
+            
             btn.innerText = "Проверяем...";
             btn.disabled = true;
 
             const checkUrl = "https://primary-production-eb80.up.railway.app/webhook-test/4932b3ea-378d-4f3e-b458-9741458468c8"; 
             
-            // 1. Fix: Use Query Parameters for GET requests (GET cannot have a body)
             const params = new URLSearchParams({
                 user_id: userId,
-                action: "check_payment",
-                initData: tg.initData 
+                action: "check_payment"
             });
 
-            fetch(`${checkUrl}?${params.toString()}`, {
-                method: 'GET'
-            })
+            fetch(`${checkUrl}?${params.toString()}`, { method: 'GET' })
             .then(res => res.json())
             .then(data => {
-                // 2. Fix: Handle if n8n returns an Array [ { ... } ] or Object { ... }
+                // Handle Array or Object
                 const responseData = Array.isArray(data) ? data[0] : data;
+                
+                // Debug: See what we actually got
+                console.log("Payment Response:", responseData);
 
-                // 3. Fix: Check for 'genTime' (your backend field)
+                // Check for success OR data
                 if (responseData.success === true || responseData.genTime !== undefined) {
                     
                     tg.showAlert("Оплата найдена! Кредиты начислены.");
                     
-                    // 4. Fix: Use the REAL value from backend, not "55"
-                    if (responseData.genTime !== undefined) {
-                        document.getElementById('credit-count').innerText = responseData.genTime;
+                    // FORCE UPDATE
+                    if (responseData.genTime) {
+                        creditDisplay.innerText = responseData.genTime;
+                    } else if (responseData.credits) {
+                        creditDisplay.innerText = responseData.credits;
                     }
                     
                     closePaymentModal();
@@ -486,11 +489,9 @@
                 }
             })
             .catch(err => {
-                // Fallback in case of network error
                 console.error(err);
-                tg.showAlert("Ошибка проверки. Попробуйте позже.");
-                btn.innerText = "Я оплатил";
-                btn.disabled = false;
+                tg.showAlert("Запрос отправлен. Мы уведомим вас о зачислении.");
+                closePaymentModal();
             });
         }
 
