@@ -6,582 +6,554 @@
     <title>Genie AI</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* --- RESET & BASE --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--tg-theme-bg-color, #ffffff);
             color: var(--tg-theme-text-color, #000000);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            display: flex; flex-direction: column; min-height: 100vh;
         }
 
+        /* --- HEADER --- */
         .header {
-            padding: 20px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 16px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--tg-theme-bg-color, #ffffff);
+            position: sticky; top: 0; z-index: 10;
         }
-        .header-text h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 800;
-        }
-        .header-text p {
-            margin: 4px 0 0;
-            color: var(--tg-theme-hint-color, #8e8e93);
-            font-size: 14px;
-        }
+        .header-text h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+        .header-text p { margin: 2px 0 0; color: var(--tg-theme-hint-color, #8e8e93); font-size: 13px; }
 
+        /* CREDITS PILL */
         .credits-container {
-            display: flex;
-            align-items: center;
+            display: flex; align-items: center;
             background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 14px;
+            padding: 6px 8px 6px 12px;
+            border-radius: 30px;
+            font-weight: 600; font-size: 14px;
         }
-        .token-icon { margin-right: 6px; }
+        .token-icon { margin-right: 6px; font-size: 14px; }
         .add-credits-btn {
             background-color: var(--tg-theme-button-color, #3390ec);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            margin-left: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            line-height: 1;
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none; border-radius: 50%;
+            width: 24px; height: 24px;
+            margin-left: 8px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; line-height: 1; padding-bottom: 2px;
         }
 
+        /* --- GRID LAYOUT --- */
         .grid-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            padding: 0 16px 40px 16px;
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 12px; padding: 10px 16px 40px 16px;
         }
-
         .celeb-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            display: flex; flex-direction: column; align-items: center;
             background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            border-radius: 16px;
-            padding: 16px 10px;
-            cursor: pointer;
-            transition: transform 0.1s ease;
-            position: relative;
+            border-radius: 16px; padding: 16px 10px;
+            cursor: pointer; position: relative; overflow: hidden;
+            transition: transform 0.1s ease, background-color 0.2s;
         }
-        .celeb-card:active { transform: scale(0.97); }
+        .celeb-card:active { transform: scale(0.96); background-color: var(--tg-theme-bg-color, #e5e5e5); }
         .celeb-icon {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 72px; height: 72px; border-radius: 50%;
+            object-fit: cover; margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            background-color: #ddd;
         }
-        .celeb-name {
-            font-size: 14px;
-            font-weight: 600;
-            text-align: center;
-        }
+        .celeb-name { font-size: 14px; font-weight: 600; text-align: center; line-height: 1.2; }
 
+        /* --- MODAL OVERLAY --- */
         .modal-overlay {
-            display: none;
-            position: fixed;
+            display: none; position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.6);
             z-index: 1000;
-            align-items: flex-end; 
-            justify-content: center;
-            backdrop-filter: blur(4px);
+            align-items: flex-end; justify-content: center;
+            backdrop-filter: blur(5px);
+            opacity: 0; transition: opacity 0.2s ease;
         }
+        .modal-overlay.show { opacity: 1; }
 
-        @media (min-width: 400px) {
-            .modal-overlay { align-items: center; }
-            .modal-content { border-radius: 20px; width: 350px; }
-        }
-
+        /* --- MODAL CONTENT --- */
         .modal-content {
-            background: var(--tg-theme-bg-color, #fff);
-            padding: 24px;
-            border-radius: 20px 20px 0 0;
-            width: 100%;
+            background: var(--tg-theme-bg-color, #ffffff);
+            padding: 24px; border-radius: 24px 24px 0 0;
+            width: 100%; max-width: 500px;
             box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
             text-align: center;
-            position: relative;
-            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .modal-overlay.show .modal-content { transform: translateY(0); }
+
+        @media (min-width: 450px) {
+            .modal-overlay { align-items: center; }
+            .modal-content { border-radius: 24px; width: 90%; }
         }
 
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        .input-view { display: block; }
+        /* --- FORM ELEMENTS --- */
+        h3.modal-title { margin: 0 0 8px; font-size: 20px; font-weight: 700; }
+        p.modal-desc { margin: 0 0 20px; color: var(--tg-theme-hint-color, #888); font-size: 14px; line-height: 1.5; }
         
-        .success-view { display: none; padding: 20px 0; }
-
         textarea {
-            width: 100%;
-            height: 120px;
-            margin: 20px 0;
-            padding: 16px;
-            border-radius: 16px;
-            border: 1px solid transparent;
-            background-color: var(--tg-theme-secondary-bg-color, #f9f9f9);
+            width: 100%; height: 120px; margin: 10px 0 20px; padding: 14px;
+            border-radius: 12px; border: 1px solid transparent;
+            background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
             color: var(--tg-theme-text-color, #000);
-            font-family: inherit;
-            font-size: 16px;
-            resize: none;
-            box-sizing: border-box;
-            outline: none;
+            font-family: inherit; font-size: 16px;
+            resize: none; outline: none;
         }
-        textarea:focus {
-            border: 1px solid var(--tg-theme-button-color, #3390ec);
-            background-color: var(--tg-theme-bg-color, #fff);
-        }
+        textarea:focus { border-color: var(--tg-theme-button-color, #3390ec); background-color: var(--tg-theme-bg-color, #fff); }
 
+        /* --- BUTTONS --- */
         .btn-primary {
             background-color: var(--tg-theme-button-color, #3390ec);
-            color: var(--tg-theme-button-text-color, #fff);
-            border: none;
-            padding: 16px;
-            border-radius: 14px;
-            width: 100%;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            margin-bottom: 12px;
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none; padding: 14px; border-radius: 12px;
+            width: 100%; font-size: 16px; font-weight: 700;
+            cursor: pointer; margin-bottom: 8px;
+            display: flex; align-items: center; justify-content: center;
             transition: opacity 0.2s;
         }
+        .btn-primary:active { opacity: 0.8; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
         .btn-ton {
-            background-color: #0098EA;
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 14px;
-            width: 100%;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
+            background: #0098EA; color: #fff;
+            text-decoration: none; margin-bottom: 12px;
         }
+
         .btn-secondary {
-            background: transparent;
-            color: var(--tg-theme-hint-color, #888);
-            border: none;
-            padding: 10px;
-            width: 100%;
-            font-size: 15px;
-            cursor: pointer;
+            background: transparent; color: var(--tg-theme-hint-color, #888);
+            border: none; padding: 10px; width: 100%;
+            font-size: 15px; font-weight: 500; cursor: pointer;
         }
 
-        .checkmark-circle {
-            width: 80px; height: 80px; position: relative;
-            display: inline-block; vertical-align: top;
-            margin-bottom: 20px;
-        }
-        .checkmark-circle .background {
-            width: 80px; height: 80px;
-            border-radius: 50%;
-            background: #4cd964;
-            position: absolute;
-        }
-        .checkmark-circle .checkmark {
-            border-radius: 5px;
-        }
-        .checkmark-circle .checkmark.draw:after {
-            animation-delay: 100ms;
-            animation-duration: 1s;
-            animation-timing-function: ease;
-            animation-name: checkmark;
-            transform: scaleX(-1) rotate(135deg);
-            animation-fill-mode: forwards;
-        }
-        .checkmark-circle .checkmark:after {
-            opacity: 1;
-            height: 40px;
-            width: 20px;
-            transform-origin: left top;
-            border-right: 4px solid white;
-            border-top: 4px solid white;
-            content: '';
-            left: 14px;
-            top: 40px;
-            position: absolute;
-        }
-        @keyframes checkmark {
-            0% { height: 0; width: 0; opacity: 1; }
-            20% { height: 0; width: 20px; opacity: 1; }
-            40% { height: 40px; width: 20px; opacity: 1; }
-            100% { height: 40px; width: 20px; opacity: 1; }
+        /* --- PAYMENT UI --- */
+        .rate-box {
+            background: rgba(0, 152, 234, 0.1);
+            color: #0098EA;
+            padding: 8px 12px; border-radius: 8px;
+            font-size: 13px; font-weight: 600;
+            margin-bottom: 20px; display: inline-block;
         }
 
-        .deposit-box {
+        .divider {
+            display: flex; align-items: center; color: var(--tg-theme-hint-color, #ccc);
+            font-size: 12px; margin: 16px 0; font-weight: 500;
+        }
+        .divider::before, .divider::after {
+            content: ""; flex: 1; height: 1px; background: #eee; margin: 0 10px;
+        }
+
+        .deposit-card {
             background-color: var(--tg-theme-secondary-bg-color, #f9f9f9);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            text-align: left;
+            border-radius: 12px; padding: 12px;
+            margin-bottom: 12px; text-align: left;
+            border: 1px solid transparent;
         }
-        .deposit-label {
-            font-size: 12px;
-            color: var(--tg-theme-hint-color, #888);
-            margin-bottom: 4px;
-            font-weight: 600;
-            text-transform: uppercase;
+        .deposit-card.highlight { border-color: rgba(255, 149, 0, 0.3); background-color: rgba(255, 149, 0, 0.05); }
+        
+        .label {
+            font-size: 11px; color: var(--tg-theme-hint-color, #888);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 700;
         }
-        .deposit-value-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .value-row { display: flex; justify-content: space-between; align-items: center; }
+        .value {
+            font-family: 'SF Mono', 'Roboto Mono', monospace;
+            font-size: 14px; font-weight: 500;
+            word-break: break-all; margin-right: 12px;
+            color: var(--tg-theme-text-color, #000);
         }
-        .deposit-value {
-            font-family: monospace;
-            font-size: 13px;
-            word-break: break-all;
-            margin-right: 10px;
-            background: rgba(0,0,0,0.05);
-            padding: 4px 8px;
-            border-radius: 6px;
-        }
-        .copy-btn {
-            background: none;
-            border: none;
+        .copy-icon-btn {
+            background: var(--tg-theme-bg-color, #fff);
+            border: 1px solid rgba(0,0,0,0.05);
             color: var(--tg-theme-button-color, #3390ec);
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            white-space: nowrap;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 12px; font-weight: 600;
+            cursor: pointer; min-width: 80px; text-align: center;
+            transition: all 0.2s;
         }
+        .copy-icon-btn.copied {
+            background: #4cd964; color: white; border-color: #4cd964;
+        }
+
         .warning-text {
-            font-size: 12px;
-            color: #ff3b30;
-            margin-bottom: 20px;
-            line-height: 1.4;
-            text-align: left;
+            font-size: 12px; color: #ff3b30;
+            margin: 16px 0 20px; line-height: 1.4;
+            background: rgba(255, 59, 48, 0.08);
+            padding: 10px; border-radius: 8px; text-align: center;
         }
+
+        /* --- STATUS VIEWS (Success/Error) --- */
+        .status-view {
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px 0; animation: fadeIn 0.3s ease;
+        }
+        .status-icon {
+            width: 64px; height: 64px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; margin-bottom: 16px;
+        }
+        .status-success .status-icon { background: #E4F9E8; color: #34C759; }
+        .status-error .status-icon { background: #FFEBEA; color: #FF3B30; }
+        
+        .status-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+        .status-desc { color: var(--tg-theme-hint-color, #888); font-size: 14px; margin-bottom: 24px; max-width: 80%; line-height: 1.5; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* Utilities */
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
+    <!-- HEADER -->
     <div class="header">
         <div class="header-text">
             <h1>Genie AI</h1>
             <p>Выберите персонажа</p>
         </div>
         
+        <!-- CREDITS -->
         <div class="credits-container">
             <span class="token-icon">💎</span>
-            <span id="credit-count">5</span>
+            <span id="credit-count">...</span>
             <button class="add-credits-btn" onclick="openPaymentModal()">+</button>
         </div>
     </div>
 
+    <!-- GRID -->
     <div class="grid-container">
         
+        <!-- Replace placeholder URLs with your images -->
         <div class="celeb-card" onclick="openModal('moss_audio_242d4d1b-a29c-11f0-abb1-3ebcbb261618', '1kpypuPTphVHtjD9NWZCCKKxn7uuUO_KN', 'Путин')">
-            <img src="https://placehold.co/200x200/333/FFF?text=VP" alt="Putin" class="celeb-icon">
+            <img src="https://placehold.co/150/333/FFF?text=VP" alt="Putin" class="celeb-icon">
             <span class="celeb-name">Путин</span>
         </div>
 
         <div class="celeb-card" onclick="openModal('genie_bot_zelenskiy_voice_id', '1WfhXhCrBeP7RbdpHUH48H4n2WYMyiehU', 'Зеленский')">
-            <img src="https://placehold.co/200x200/green/FFF?text=VZ" alt="Zelensky" class="celeb-icon">
+            <img src="https://placehold.co/150/green/FFF?text=VZ" alt="Zelensky" class="celeb-icon">
             <span class="celeb-name">Зеленский</span>
         </div>
 
         <div class="celeb-card" onclick="openModal('genie_bot_markaryan_voice_id', '1YAb3rD2MIODq7e0nkJBnuGjzsJRB6inq', 'Маркарян')">
-            <img src="https://placehold.co/200x200/cc0000/FFF?text=AM" alt="Markaryan" class="celeb-icon">
+            <img src="https://placehold.co/150/cc0000/FFF?text=AM" alt="Markaryan" class="celeb-icon">
             <span class="celeb-name">Маркарян</span>
         </div>
 
         <div class="celeb-card" onclick="openModal('genie_bot_elon_voice_id', 'v_elon_09', 'Илон Маск')">
-            <img src="https://placehold.co/200x200/0000cc/FFF?text=EM" alt="Elon" class="celeb-icon">
+            <img src="https://placehold.co/150/0000cc/FFF?text=EM" alt="Elon" class="celeb-icon">
             <span class="celeb-name">Илон Маск</span>
         </div>
 
     </div>
 
-    <div id="inputModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
+    <!-- INPUT MODAL (VIDEO) -->
+    <div id="inputModal" class="modal-overlay">
         <div class="modal-content">
-            <div id="formSection" class="input-view">
+            
+            <!-- FORM VIEW -->
+            <div id="videoFormView">
                 <h3 class="modal-title" id="modalTitle">Персонаж</h3>
                 <p class="modal-desc">Введите текст, который нужно озвучить.</p>
                 <textarea id="userText" placeholder="Привет! Это тестовое сообщение..."></textarea>
                 <button id="generateBtn" class="btn-primary" onclick="submitToN8n()">Создать видео</button>
                 <button class="btn-secondary" onclick="closeModal()">Отмена</button>
             </div>
-            <div id="successSection" class="success-view">
-                <div class="checkmark-circle">
-                    <div class="background"></div>
-                    <div class="checkmark draw"></div>
-                </div>
-                <h3 class="modal-title">Готово!</h3>
-                <p class="modal-desc">Генерация началась.<br>Видео скоро появится в чате.</p>
+
+            <!-- SUCCESS VIEW (Video) -->
+            <div id="videoSuccessView" class="status-view status-success">
+                <div class="status-icon">✓</div>
+                <div class="status-title">Готово!</div>
+                <div class="status-desc">Генерация началась. Видео скоро придет в чат.</div>
                 <button class="btn-secondary" onclick="tg.close()">Закрыть</button>
             </div>
+
         </div>
     </div>
 
-    <div id="paymentModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
+    <!-- PAYMENT MODAL -->
+    <div id="paymentModal" class="modal-overlay">
         <div class="modal-content">
-            <h3 class="modal-title">Пополнение</h3>
-            <p class="modal-desc">Отправьте <b>1 TON</b> или <b>10 USDT</b> (сети TON) на адрес ниже.</p>
             
-            <button id="deepLinkBtn" class="btn-ton" onclick="openDeepLink()">
-                💎 Открыть Кошелек
-            </button>
-
-            <p style="font-size: 13px; color: #888; margin: 10px 0;">или скопируйте вручную:</p>
-
-            <div class="deposit-box">
-                <div class="deposit-label">Адрес (TON Network)</div>
-                <div class="deposit-value-row">
-                    <div class="deposit-value" id="walletAddr">0QBQfJChJUTwoJUJUgZRnI5rBsZ1b7rkFT6Khw0wh5mBtQHG</div>
-                    <button class="copy-btn" onclick="copyText('walletAddr')">КОПИРОВАТЬ</button>
+            <!-- PAYMENT FORM -->
+            <div id="paymentFormView">
+                <h3 class="modal-title">Пополнение</h3>
+                <div class="rate-box">
+                    1 TON = 10 💎 &nbsp;|&nbsp; 1.6 USDT = 10 💎
                 </div>
-            </div>
+                
+                <button id="deepLinkBtn" class="btn-primary btn-ton" onclick="openDeepLink()">
+                    💎 Открыть Кошелек (Авто)
+                </button>
 
-            <div class="deposit-box">
-                <div class="deposit-label" style="color: #0098EA;">ОБЯЗАТЕЛЬНЫЙ КОММЕНТАРИЙ</div>
-                <div class="deposit-value-row">
-                    <div class="deposit-value" id="userComment">loading...</div>
-                    <button class="copy-btn" onclick="copyText('userComment')">КОПИРОВАТЬ</button>
+                <div class="divider">или вручную</div>
+
+                <!-- Wallet Address -->
+                <div class="deposit-card">
+                    <div class="label">Адрес (TON Network)</div>
+                    <div class="value-row">
+                        <div class="value" id="walletAddr">Loading...</div>
+                        <button class="copy-icon-btn" onclick="copyText('walletAddr', this)">Скопировать</button>
+                    </div>
                 </div>
+
+                <!-- Comment -->
+                <div class="deposit-card highlight">
+                    <div class="label" style="color: #ff9500;">Обязательный комментарий (Memo)</div>
+                    <div class="value-row">
+                        <div class="value" id="userComment">...</div>
+                        <button class="copy-icon-btn" onclick="copyText('userComment', this)">Скопировать</button>
+                    </div>
+                </div>
+
+                <div class="warning-text">
+                    Средства без комментария будут утеряны!
+                </div>
+
+                <button id="checkPaymentBtn" class="btn-primary" onclick="checkPayment()">Я оплатил</button>
+                <button class="btn-secondary" onclick="closeModal()">Закрыть</button>
             </div>
 
-            <div class="warning-text">
-                ⚠️ <b>Важно:</b> Обязательно укажите комментарий, иначе средства пропадут!
+            <!-- SUCCESS VIEW (Payment) -->
+            <div id="paymentSuccessView" class="status-view status-success">
+                <div class="status-icon">💎</div>
+                <div class="status-title">Оплата получена!</div>
+                <div class="status-desc">Кредиты успешно зачислены на ваш баланс.</div>
+                <button class="btn-primary" onclick="closeModal()">Отлично</button>
             </div>
 
-            <button id="checkPaymentBtn" class="btn-primary" onclick="checkPayment()">Я оплатил</button>
-            <button class="btn-secondary" onclick="closePaymentModal()">Закрыть</button>
+            <!-- ERROR VIEW (Payment) -->
+            <div id="paymentErrorView" class="status-view status-error">
+                <div class="status-icon">✕</div>
+                <div class="status-title">Оплата не найдена</div>
+                <div class="status-desc">Блокчейн еще не обработал транзакцию. Подождите 30 секунд.</div>
+                <button class="btn-primary" onclick="resetPaymentView()">Попробовать снова</button>
+                <button class="btn-secondary" onclick="closeModal()">Закрыть</button>
+            </div>
+
         </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand(); 
+        tg.expand();
 
-        function fetchUserData() {
-            document.getElementById('credit-count').innerText = "...";
+        // --- CONFIG ---
+        const MY_WALLET_ADDRESS = "0QBSJ1oxh4XLpBpKyOiCSNUUYUxqpfbWKWkiMg0OgVXj-SuF"; 
+        const WEBHOOK_BASE = "https://primary-production-eb80.up.railway.app";
+        // ----------------
 
-            const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "test_user";
-            
-            // Your GET Balance Webhook URL
-            const getBalanceUrl = "https://primary-production-eb80.up.railway.app/webhook-test/9018a33f-c1b0-4219-98ba-5378dd869890?user_id=" + userId;
-
-            fetch(getBalanceUrl)
-                .then(res => res.json())
-                .then(data => {
-                    // FIX: Check for 'genTime' instead of 'credits'
-                    // If the response is an array (like in your snippet), grab the first item
-                    const userData = Array.isArray(data) ? data[0] : data;
-
-                    if (userData.genTime !== undefined) {
-                        document.getElementById('credit-count').innerText = userData.genTime;
-                    } else if (userData.credits !== undefined) {
-                        // Fallback in case you change the backend later
-                        document.getElementById('credit-count').innerText = userData.credits;
-                    }
-                })
-                .catch(err => {
-                    console.error("Failed to load credits", err);
-                    document.getElementById('credit-count').innerText = "5"; 
-                });
+        // USER ID LOGIC
+        let userId = "test_user";
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            userId = tg.initDataUnsafe.user.id;
+        } else {
+            // Persist fake ID for browser testing
+            const stored = localStorage.getItem('fake_user_id');
+            userId = stored || "user_" + Math.floor(Math.random() * 10000);
+            if(!stored) localStorage.setItem('fake_user_id', userId);
         }
 
-        fetchUserData();
-
-        const MY_WALLET_ADDRESS = "0QBSJ1oxh4XLpBpKyOiCSNUUYUxqpfbWKWkiMg0OgVXj-SuF"; 
-        
-        const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : "user_" + Math.floor(Math.random() * 10000);
-        
+        // Fill UI Data
         document.getElementById('userComment').innerText = userId;
         document.getElementById('walletAddr').innerText = MY_WALLET_ADDRESS;
 
+        // --- FETCH CREDITS ---
+        function fetchUserData() {
+            fetch(`${WEBHOOK_BASE}/webhook-test/9018a33f-c1b0-4219-98ba-5378dd869890?user_id=${userId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const d = Array.isArray(data) ? data[0] : data;
+                    const creds = d.credits !== undefined ? d.credits : (d.genTime !== undefined ? d.genTime : 0);
+                    document.getElementById('credit-count').innerText = creds;
+                })
+                .catch(e => console.error("Credits load error", e));
+        }
+        fetchUserData(); // Run on load
+
+        // --- COPY FUNCTION WITH FEEDBACK ---
+        function copyText(elementId, btnElement) {
+            const text = document.getElementById(elementId).innerText;
+            const originalText = btnElement.innerText;
+
+            // Copy Logic
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text);
+            } else {
+                const ta = document.createElement("textarea");
+                ta.value = text;
+                ta.style.position = "fixed"; 
+                document.body.appendChild(ta);
+                ta.focus(); ta.select();
+                try { document.execCommand('copy'); } catch (e) {}
+                document.body.removeChild(ta);
+            }
+
+            // Visual Feedback
+            btnElement.innerText = "Готово!";
+            btnElement.classList.add("copied");
+            
+            // Haptic Feedback
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+            setTimeout(() => {
+                btnElement.innerText = originalText;
+                btnElement.classList.remove("copied");
+            }, 2000);
+        }
+
+        // --- DEEP LINK ---
         function openDeepLink() {
-
-            if (!MY_WALLET_ADDRESS || MY_WALLET_ADDRESS.includes("YOUR-REAL")) {
-                tg.showAlert("Ошибка: Вы не настроили адрес кошелька в коде!");
-                return;
-            }
-
-            const deepLink = `https://app.tonkeeper.com/transfer/${MY_WALLET_ADDRESS}?text=${userId}`;
-            
-            try {
-                tg.openLink(deepLink);
-            } catch (e) {
-                console.error(e);
-                window.open(deepLink, '_blank');
-            }
+            const link = `https://app.tonkeeper.com/transfer/${MY_WALLET_ADDRESS}?text=${userId}`;
+            tg.openLink(link);
         }
 
-        function fallbackCopyText(text) {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            textArea.style.position = "fixed";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            
-            try {
-                const successful = document.execCommand('copy');
-                if(successful) tg.showAlert("Скопировано!");
-            } catch (err) {
-                tg.showAlert("Не удалось скопировать.");
-            }
-            document.body.removeChild(textArea);
-        }
-
+        // --- PAYMENT CHECK ---
         function checkPayment() {
             const btn = document.getElementById('checkPaymentBtn');
-            const creditDisplay = document.getElementById('credit-count'); // Cache the element
-            
             btn.innerText = "Проверяем...";
             btn.disabled = true;
 
-            const checkUrl = "https://primary-production-eb80.up.railway.app/webhook-test/4932b3ea-378d-4f3e-b458-9741458468c8"; 
-            
-            const params = new URLSearchParams({
-                user_id: userId,
-                action: "check_payment"
-            });
+            const url = `${WEBHOOK_BASE}/webhook-test/4932b3ea-378d-4f3e-b458-9741458468c8?user_id=${userId}&action=check_payment`;
 
-            fetch(`${checkUrl}?${params.toString()}`, { method: 'GET' })
+            fetch(url, { method: 'GET' })
             .then(res => res.json())
             .then(data => {
-                // Handle Array or Object
-                const responseData = Array.isArray(data) ? data[0] : data;
+                const d = Array.isArray(data) ? data[0] : data;
                 
-                // Debug: See what we actually got
-                console.log("Payment Response:", responseData);
-
-                // Check for success OR data
-                if (responseData.success === true || responseData.genTime !== undefined) {
+                if (d.success === true || d.genTime !== undefined || d.credits !== undefined) {
+                    // SUCCESS
+                    if(d.genTime) document.getElementById('credit-count').innerText = d.genTime;
+                    if(d.credits) document.getElementById('credit-count').innerText = d.credits;
                     
-                    tg.showAlert("Оплата найдена! Кредиты начислены.");
-                    
-                    // FORCE UPDATE
-                    if (responseData.genTime) {
-                        creditDisplay.innerText = responseData.genTime;
-                    } else if (responseData.credits) {
-                        creditDisplay.innerText = responseData.credits;
-                    }
-                    
-                    closePaymentModal();
+                    showStatus('paymentSuccessView');
+                    if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
                 } else {
-                    tg.showAlert("Оплата пока не найдена. Подождите 30 сек.");
-                    btn.innerText = "Я оплатил";
-                    btn.disabled = false;
+                    // ERROR
+                    showStatus('paymentErrorView');
+                    if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
                 }
             })
             .catch(err => {
                 console.error(err);
-                tg.showAlert("Запрос отправлен. Мы уведомим вас о зачислении.");
-                closePaymentModal();
+                showStatus('paymentErrorView'); // Show error view on network fail too
+            })
+            .finally(() => {
+                btn.innerText = "Я оплатил";
+                btn.disabled = false;
             });
         }
 
-        let currentVoiceId = null;
-        let currentVideoId = null;
-        let currentVoiceName = null;
-
-        function openModal(voiceId, videoId, name) {
-            currentVoiceId = voiceId;
-            currentVideoId = videoId; 
-            currentVoiceName = name;
-
-            document.getElementById('formSection').style.display = 'block';
-            document.getElementById('successSection').style.display = 'none';
-            document.getElementById('modalTitle').innerText = name;
-            document.getElementById('userText').value = "";
-            document.getElementById('generateBtn').innerText = "Создать видео";
-            document.getElementById('generateBtn').disabled = false;
-            
-            document.getElementById('inputModal').style.display = 'flex';
-            
-            setTimeout(() => { document.getElementById('userText').focus(); }, 150);
+        function resetPaymentView() {
+            document.getElementById('paymentFormView').classList.remove('hidden');
+            document.getElementById('paymentSuccessView').classList.remove('input-view'); // force hide
+            document.getElementById('paymentSuccessView').style.display = 'none';
+            document.getElementById('paymentErrorView').style.display = 'none';
         }
 
-        function closeModal() {
-            document.getElementById('inputModal').style.display = 'none';
-        }
-
-        function openPaymentModal() {
-            document.getElementById('paymentModal').style.display = 'flex';
-        }
-
-        function closePaymentModal() {
-            document.getElementById('paymentModal').style.display = 'none';
-        }
-
-        function closeModalOnOutsideClick(event) {
-            if (event.target.id === 'inputModal') {
-                closeModal();
-            } else if (event.target.id === 'paymentModal') {
-                closePaymentModal();
-            }
-        }
+        // --- VIDEO GENERATION ---
+        let currentVoiceId, currentVideoId, currentVoiceName;
 
         function submitToN8n() {
             const text = document.getElementById('userText').value;
-
-            if (!text || text.trim() === "") {
-                tg.showAlert("Пожалуйста, введите текст!");
-                return;
-            }
+            if (!text) { tg.showAlert("Введите текст!"); return; }
 
             const btn = document.getElementById('generateBtn');
             btn.innerText = "Отправка...";
             btn.disabled = true;
 
-            const payload = {
-                voice_id: currentVoiceId,
-                video_id: currentVideoId, 
-                voice_name: currentVoiceName,
-                text: text,
-                user_id: userId,
-                username: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username : "unknown",
-                initData: tg.initData
-            };
-
-            const webhookUrl = "https://primary-production-eb80.up.railway.app/webhook-test/4b0fe177-57c6-4e97-a3f4-a976f61a8046"; 
-
-            fetch(webhookUrl, {
+            fetch(`${WEBHOOK_BASE}/webhook-test/4b0fe177-57c6-4e97-a3f4-a976f61a8046`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    voice_id: currentVoiceId,
+                    video_id: currentVideoId, 
+                    voice_name: currentVoiceName,
+                    text: text,
+                    user_id: userId,
+                    username: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username : "unknown",
+                    initData: tg.initData
+                })
             })
-            .then(response => {
-                document.getElementById('formSection').style.display = 'none';
-                document.getElementById('successSection').style.display = 'block';
+            .then(() => {
+                // Show Success View
+                document.getElementById('videoFormView').style.display = 'none';
+                document.getElementById('videoSuccessView').style.display = 'flex';
+                
+                // Visual credit decrement
+                let c = parseInt(document.getElementById('credit-count').innerText);
+                if(c > 0) document.getElementById('credit-count').innerText = c - 1;
 
-                let credits = parseInt(document.getElementById('credit-count').innerText);
-                if (credits > 0) document.getElementById('credit-count').innerText = credits - 1;
-
-                setTimeout(() => {
-                    tg.close();
-                }, 2500);
+                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             })
-            .catch(error => {
-                tg.showAlert("Ошибка соединения. Проверьте интернет.");
-                console.error(error);
+            .catch(err => {
+                tg.showAlert("Ошибка соединения");
                 btn.innerText = "Создать видео";
                 btn.disabled = false;
             });
+        }
+
+        // --- MODAL SYSTEM ---
+        function openModal(voiceId, videoId, name) {
+            currentVoiceId = voiceId; currentVideoId = videoId; currentVoiceName = name;
+            
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('userText').value = "";
+            document.getElementById('generateBtn').innerText = "Создать видео";
+            document.getElementById('generateBtn').disabled = false;
+
+            // Show Form, Hide Success
+            document.getElementById('videoFormView').style.display = 'block';
+            document.getElementById('videoSuccessView').style.display = 'none';
+
+            toggleModal('inputModal', true);
+            setTimeout(() => document.getElementById('userText').focus(), 150);
+        }
+
+        function openPaymentModal() {
+            resetPaymentView();
+            toggleModal('paymentModal', true);
+        }
+
+        function closeModal() {
+            toggleModal('inputModal', false);
+            toggleModal('paymentModal', false);
+        }
+
+        function toggleModal(id, show) {
+            const el = document.getElementById(id);
+            if (show) {
+                el.style.display = 'flex';
+                // Small delay to allow display:flex to apply before opacity transition
+                setTimeout(() => el.classList.add('show'), 10);
+            } else {
+                el.classList.remove('show');
+                setTimeout(() => el.style.display = 'none', 300);
+            }
+        }
+
+        // Helper to show specific status inside payment modal
+        function showStatus(viewId) {
+            document.getElementById('paymentFormView').classList.add('hidden');
+            document.getElementById('paymentSuccessView').style.display = 'none';
+            document.getElementById('paymentErrorView').style.display = 'none';
+            
+            const view = document.getElementById(viewId);
+            view.style.display = 'flex';
+        }
+
+        // Close on background click
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                closeModal();
+            }
         }
     </script>
 </body>
