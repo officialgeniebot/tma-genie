@@ -367,7 +367,7 @@
 
         // --- FETCH CREDITS ---
         function fetchUserData() {
-            fetch(`${WEBHOOK_BASE}/webhook-test/9018a33f-c1b0-4219-98ba-5378dd869890?user_id=${userId}`)
+            fetch(`${WEBHOOK_BASE}/webhook/9018a33f-c1b0-4219-98ba-5378dd869890?user_id=${userId}`)
                 .then(res => res.json())
                 .then(data => {
                     const d = Array.isArray(data) ? data[0] : data;
@@ -421,7 +421,7 @@
             btn.innerText = "Проверяем...";
             btn.disabled = true;
 
-            const url = `${WEBHOOK_BASE}/webhook-test/4932b3ea-378d-4f3e-b458-9741458468c8?user_id=${userId}&action=check_payment`;
+            const url = `${WEBHOOK_BASE}/webhook/4932b3ea-378d-4f3e-b458-9741458468c8?user_id=${userId}&action=check_payment`;
 
             fetch(url, { method: 'GET' })
             .then(res => res.json())
